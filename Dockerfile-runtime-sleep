@@ -1,0 +1,13 @@
+# This is a common, lightweight image meant for running go binaries
+
+ARG DOCKER_REPO
+ARG ALPINE_VERSION
+
+FROM ${DOCKER_REPO}/thirdparty/alpine:${ALPINE_VERSION}
+
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
+        bash
+
+COPY sleep.sh /usr/local/bin/sleep.sh
+RUN /usr/local/bin/sleep.sh

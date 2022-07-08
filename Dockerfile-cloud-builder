@@ -1,0 +1,20 @@
+# This creates the image used in GCP Cloud builds (see _CLOUDBUILD_IMAGE in docker-build.yaml).
+# It essentially installs needed build tools like bash, make, docker, buildx plugin, etc.
+# It is built and pushed using 'make build-publish-cloud-builder', and assumes a thirdparty image
+# has already been loaded for the given version (e.g., 'alpine:3.15') via the 'make thirdparty' command
+
+ARG DOCKER_REPO
+ARG ALPINE_VERSION
+
+FROM ${DOCKER_REPO}/thirdparty/alpine:${ALPINE_VERSION}
+
+# Build tools
+RUN set -o pipefail -o xtrace \
+    && apk upgrade --no-cache \
+    && apk add --no-cache  \
+        bash \
+        docker-cli \
+        make
+
+# Install docker buildx plugin
+COPY --from=docker/buildx-bin:latest /buildx /usr/libexec/docker/cli-plugins/docker-buildx
