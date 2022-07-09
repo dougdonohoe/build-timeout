@@ -7,6 +7,10 @@ However, building multi-architecture images (e.g., `arm64` and `amd64`) in GCP C
 to the need to use QEMU emulation for the non-`amd64` architectures.  Builds that take over an hour fail during the
 push step at the end.  This repository demonstrates the problem using `sleep` in the build step.
 
+There is a work-around, described below, that hints at the source of the problem.  It seems that the `buildx` builder
+is allocating tokens when it starts up, and those have an hour expiration (at least on GCP Cloud Build).  The
+work-around restarts the builder before doing push actions.
+
 ## Error
 
 Long-running `docker buildx` builds in GCP Cloud Build timeout with this error when pushing at end of build:
@@ -94,6 +98,88 @@ To reproduce the error, start a cloud build, wait an hour and boom.
 make cloud-build-timeout
 ```
 
+The output is shown above in the Error section.
+
+## Workaround
+
+There is a work-around which boils down to:
+
+1. Build without `--push` or `--cache-co`
+2. Stop buildx builder
+3. Build normally
+
+Why this appears to work (my guess) is that the builder allocates a token when it is started, and it eventually
+times out.  Doing the first (long) build caches the results locally allowing the second build (with a new
+builder) to push cache and final images w/out running into the timeout.
+
+```shell
+make cloud-build-workaround
+```
+
+**NOTE**: You can run the work-around build concurrently to the problematic build.
+
+The output looks like this:
+
+```text
+Step #1 - "long-build": #17 3668.1 Sleep 5 #732/732...
+Step #1 - "long-build": #17 DONE 3673.1s
+Step #1 - "long-build": ------
+Step #1 - "long-build":  > importing cache manifest from us-central1-docker.pkg.dev/my-project/slow-build-test/cache/build/slow-build:4-sleep-wor
+[snip]
+Step #1 - "long-build": #17 [linux/amd64 4/4] RUN /usr/local/bin/sleep.sh
+Step #1 - "long-build": #17 CACHED
+Step #1 - "long-build":
+Step #1 - "long-build": #18 exporting to image
+Step #1 - "long-build": #18 exporting layers
+Step #1 - "long-build": #18 exporting layers 0.5s done
+Step #1 - "long-build": #18 exporting manifest sha256:78af7f94753d44b5bc1aeb68de830a1b76714ef2cdbebe857a8e23819cb5d79f 0.0s done
+Step #1 - "long-build": #18 exporting config sha256:6ccd03dd6b430835039084c84a0353f04bebac5144263767d4d786966b6737df done
+Step #1 - "long-build": #18 exporting manifest sha256:eafc81bb721d213228d841333d75dfa9a306e794bacc1066dfd2efc7acf9589a 0.0s done
+Step #1 - "long-build": #18 exporting config sha256:55e0d151d88f9edf75f650740207ede210aa215843f2ee8eee42560d0369038e done
+Step #1 - "long-build": #18 exporting manifest list sha256:4e7e1ec6a8d1fc95e788510f64246f74e9072cd3a53ddef0b6f7be2f1990cfa1 0.0s done
+Step #1 - "long-build": #18 pushing layers
+Step #1 - "long-build": #18 ...
+Step #1 - "long-build":
+Step #1 - "long-build": #19 [auth] my-project/slow-build-test/build/slow-build:pull,push token for us-central1-docker.pkg.dev
+Step #1 - "long-build": #19 DONE 0.0s
+Step #1 - "long-build":
+Step #1 - "long-build": #18 exporting to image
+Step #1 - "long-build": #18 pushing layers 0.8s done
+Step #1 - "long-build": #18 pushing manifest for us-central1-docker.pkg.dev/my-project/slow-build-test/build/slow-build:4-sleep-workaround@sha256:4e7e1ec6a8d1fc95e788510f64246f74e9072cd3a53ddef0b6f7be2f1990cfa1
+Step #1 - "long-build": #18 pushing manifest for us-central1-docker.pkg.dev/my-project/slow-build-test/build/slow-build:4-sleep-workaround@sha256:4e7e1ec6a8d1fc95e788510f64246f74e9072cd3a53ddef0b6f7be2f1990cfa1 0.3s done
+Step #1 - "long-build": #18 DONE 1.6s
+Step #1 - "long-build":
+Step #1 - "long-build": #20 exporting cache
+Step #1 - "long-build": #20 preparing build cache for export 0.0s done
+Step #1 - "long-build": #20 writing layer sha256:02a8f72729a212553ae864a43f79f67d7e6771414ea8940fa729723e562664f6
+Step #1 - "long-build": #20 ...
+Step #1 - "long-build":
+Step #1 - "long-build": #21 [auth] my-project/slow-build-test/cache/build/slow-build:pull,push token for us-central1-docker.pkg.dev
+Step #1 - "long-build": #21 DONE 0.0s
+Step #1 - "long-build":
+Step #1 - "long-build": #20 exporting cache
+Step #1 - "long-build": #20 writing layer sha256:02a8f72729a212553ae864a43f79f67d7e6771414ea8940fa729723e562664f6 0.1s done
+Step #1 - "long-build": #20 writing layer sha256:0978988867c285cec7a54a96b3379b2ffd930f0186db3e72837d643216969a41 0.0s done
+Step #1 - "long-build": #20 writing layer sha256:0aefa9e718296793f3e9fc420e61842baec3d3e7d8c0749e9334d66f5b79f7e5
+Step #1 - "long-build": #20 writing layer sha256:0aefa9e718296793f3e9fc420e61842baec3d3e7d8c0749e9334d66f5b79f7e5 0.0s done
+Step #1 - "long-build": #20 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+Step #1 - "long-build": #20 writing layer sha256:86b80458730eaed01aced9bd7e2c4a236e40bd20144dcc501c35f113166b10e4 0.0s done
+Step #1 - "long-build": #20 writing layer sha256:9981e73032c8833e387a8f96986e560edbed12c38119e0edb0439c9c2234eac9 0.0s done
+Step #1 - "long-build": #20 writing layer sha256:df9b9388f04ad6279a7410b85cedfdcb2208c0a003da7ab5613af71079148139
+Step #1 - "long-build": #20 writing layer sha256:df9b9388f04ad6279a7410b85cedfdcb2208c0a003da7ab5613af71079148139 0.0s done
+Step #1 - "long-build": #20 writing config sha256:85fed0ae6745088570cda8be315ebf18361197b297d7132aef481857d0ff0503
+Step #1 - "long-build": #20 writing config sha256:85fed0ae6745088570cda8be315ebf18361197b297d7132aef481857d0ff0503 0.2s done
+Step #1 - "long-build": #20 writing manifest sha256:935915b88030081af4b5d8b6307f83c79951dc55120e022ad1d10140e5549072 0.0s done
+Step #1 - "long-build": #20 DONE 0.6s
+Step #1 - "long-build": ------
+Step #1 - "long-build":  > importing cache manifest from us-central1-docker.pkg.dev/my-project/slow-build-test/cache/build/slow-build:4-sleep-workaround:
+Step #1 - "long-build": ------
+```
+
+**NOTE**:  Running the work-around a second time should not take an hour since it should take advantage of the 
+`--cache-to`/`--cache-from` directives.  To re-run, delete the `my-project/slow-build-test/cache/build/slow-build` 
+folder in artifact registry.
+
 ## Local Build
 
 To run the `docker buildx` step locally (which does not timeout):
@@ -102,7 +188,7 @@ To run the `docker buildx` step locally (which does not timeout):
 make buildx-publish-runtime-sleep
 ```
 
-Output looks like this:
+The output looks like this:
 
 ```text
 #15 3675.8 Sleep 5 #732/732...
