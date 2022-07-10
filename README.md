@@ -54,6 +54,40 @@ Step #2 - "long-build": make: *** [Makefile:229: buildx-publish-runtime-sleep] E
 
 **NOTE**:  Running same build locally (i.e., NOT in Cloud Build) works fine (see example at bottom of this page).
 
+The version of all things Docker is printed in the `setup` step:
+
+```text
+Step #0 - "setup": Client:
+Step #0 - "setup":  Version:           20.10.16
+Step #0 - "setup":  API version:       1.41
+Step #0 - "setup":  Go version:        go1.17.10
+Step #0 - "setup":  Git commit:        aa7e414fdcb23a66e8fabbef0a560ef1769eace5
+Step #0 - "setup":  Built:             Sun May 15 15:07:52 2022
+Step #0 - "setup":  OS/Arch:           linux/amd64
+Step #0 - "setup":  Context:           default
+Step #0 - "setup":  Experimental:      true
+Step #0 - "setup": 
+Step #0 - "setup": Server: Docker Engine - Community
+Step #0 - "setup":  Engine:
+Step #0 - "setup":   Version:          20.10.17
+Step #0 - "setup":   API version:      1.41 (minimum version 1.12)
+Step #0 - "setup":   Go version:       go1.17.11
+Step #0 - "setup":   Git commit:       a89b842
+Step #0 - "setup":   Built:            Mon Jun  6 23:01:23 2022
+Step #0 - "setup":   OS/Arch:          linux/amd64
+Step #0 - "setup":   Experimental:     false
+Step #0 - "setup":  containerd:
+Step #0 - "setup":   Version:          1.6.6
+Step #0 - "setup":   GitCommit:        10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1
+Step #0 - "setup":  runc:
+Step #0 - "setup":   Version:          1.1.2
+Step #0 - "setup":   GitCommit:        v1.1.2-0-ga916309
+Step #0 - "setup":  docker-init:
+Step #0 - "setup":   Version:          0.19.0
+Step #0 - "setup":   GitCommit:        de40ad0
+Step #0 - "setup": github.com/docker/buildx v0.8.2 6224def4dd2c3d347eee19db595348c50d7cb491
+```
+
 ## Prerequisite
 
 You first need a GCP artifact registry and repository - edit the top of the Makefile to define them.
@@ -81,7 +115,7 @@ gcloud config set project my-project
 
 ## Setup
 
-Our base image is a multi-arch Alpine image, which is used to create out image and the cloud builder image.
+Our base image is a multi-arch Alpine image, which is used to create our image and the cloud builder image.
 
 Run these commands to copy the thirdparty image to your artifact registry and create the `docker buildx` cloud builder:
 
