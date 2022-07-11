@@ -1,5 +1,7 @@
 # Build Timeout
 
+* Filed under [buildx issue #1205](https://github.com/docker/buildx/issues/1205)
+
 ## Introduction
 
 Multi-architecture images are becoming more desirable with the advent of the Apple M1 laptops.
