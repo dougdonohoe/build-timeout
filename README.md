@@ -40,8 +40,9 @@ I wonder if there is a way to set this in GCP Cloud Build?
           access_token_lifetime: 10800s
 ```
 
-The above docs point to [constraints/iam.allowServiceAccountCredentialLifetimeExtension](https://cloud.google.com/resource-manager/docs/organization-policy/org-policy-constraints)
-organization policy as an alternative to this parameter.
+The above docs state the max is 1 hour, but point to [constraints/iam.allowServiceAccountCredentialLifetimeExtension](https://cloud.google.com/resource-manager/docs/organization-policy/org-policy-constraints)
+organization policy as a way to increase the max to 12 hours. This doc points to this guide: 
+[Extend lifetime of OAuth 2.0 access tokens](https://cloud.google.com/resource-manager/docs/organization-policy/restricting-service-accounts#extend_oauth_ttl).
 
 ## Version
 
