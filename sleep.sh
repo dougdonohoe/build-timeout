@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
 #
-# Script to sleep a bit over an hour, 5 seconds at a time
+# Script to sleep a bit X minutes, 5 seconds at a time, defaulting to 61 minutes.  Arg 1 can be
+# used to specify alternate minutes.
 #
 
-# 732*5 = 3660 seconds (61 minutes)
-rounds=732
+# setup
+minutes=${1:-61}
 secs=5
+((rounds = minutes * 60 / secs))
+total=0
 
 # sleep loop
-number=1
-while [[ $number -le $rounds ]] ; do
-    echo "Sleep $secs #$number/$rounds..."
+number=0
+echo "Sleeping for $minutes minutes, $secs seconds at a time..."
+while [[ $number -lt $rounds ]] ; do
   sleep $secs
   ((number = number + 1))
+  ((total = total + secs))
+  echo "Slept $total seconds of $minutes minutes #$number/$rounds..."
 done
+echo "Done sleeping $minutes minutes."

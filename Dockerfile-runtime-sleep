@@ -5,7 +5,9 @@ ARG ALPINE_VERSION
 
 FROM ${DOCKER_REPO}/thirdparty/alpine:${ALPINE_VERSION}
 
+ARG MINUTES
+
 RUN apk upgrade --no-cache && apk add --no-cache bash
 
 COPY sleep.sh /usr/local/bin/sleep.sh
-RUN /usr/local/bin/sleep.sh
+RUN /usr/local/bin/sleep.sh ${MINUTES}

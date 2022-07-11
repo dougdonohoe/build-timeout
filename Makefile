@@ -6,6 +6,9 @@ GCP_PROJECT ?= my-project
 REPO ?= slow-build-test
 ARTIFACT_REGISTRY ?= us-central1-docker.pkg.dev/$(GCP_PROJECT)
 
+# Minutes to sleep
+MINUTES ?= 61
+
 # Setup repo paths
 DOCKER_REPO = $(ARTIFACT_REGISTRY)/$(REPO)
 CACHE_ROOT = $(DOCKER_REPO)/cache
@@ -75,6 +78,7 @@ buildx-publish-runtime-sleep: buildx-setup
 		--progress plain \
 		--build-arg DOCKER_REPO=$(DOCKER_REPO) \
 		--build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
+		--build-arg MINUTES=$(MINUTES) \
 		--cache-from type=registry,ref=$(RUNTIME_CACHE_TAG)-sleep \
 		--cache-to type=registry,ref=$(RUNTIME_CACHE_TAG)-sleep,mode=max \
 		--pull --push --tag $(RUNTIME_TAG)-sleep .
@@ -89,6 +93,7 @@ buildx-publish-runtime-sleep-workaround: buildx-setup
 		--progress plain \
 		--build-arg DOCKER_REPO=$(DOCKER_REPO) \
 		--build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
+		--build-arg MINUTES=$(MINUTES) \
 		--cache-from type=registry,ref=$(RUNTIME_CACHE_TAG)-sleep-workaround \
 		--pull --tag $(RUNTIME_TAG)-sleep-workaround .
 	$(DOCKER) buildx stop $(BUILDER) # <--- key to the whole workaround
@@ -98,6 +103,7 @@ buildx-publish-runtime-sleep-workaround: buildx-setup
 		--progress plain \
 		--build-arg DOCKER_REPO=$(DOCKER_REPO) \
 		--build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
+		--build-arg MINUTES=$(MINUTES) \
 		--cache-from type=registry,ref=$(RUNTIME_CACHE_TAG)-sleep-workaround \
 		--cache-to type=registry,ref=$(RUNTIME_CACHE_TAG)-sleep-workaround,mode=max \
 		--pull --push --tag $(RUNTIME_TAG)-sleep-workaround .
@@ -105,11 +111,11 @@ buildx-publish-runtime-sleep-workaround: buildx-setup
 ## cloud-build-timeout: run cloud build timeout
 cloud-build-timeout:
 	gcloud builds submit --region=global --config docker-build.yaml \
- 		--substitutions=_REPO=$(REPO),_CLOUDBUILD_IMAGE=$(CLOUDBUILD_TAG),_TARGET=buildx-publish-runtime-sleep \
+ 		--substitutions=_REPO=$(REPO),_CLOUDBUILD_IMAGE=$(CLOUDBUILD_TAG),_TARGET=buildx-publish-runtime-sleep,_MINUTES=$(MINUTES) \
 		.
 
 ## cloud-build-timeout-workaround: run cloud build timeout with workaround
 cloud-build-timeout-workaround:
 	gcloud builds submit --region=global --config docker-build.yaml \
- 		--substitutions=_REPO=$(REPO),_CLOUDBUILD_IMAGE=$(CLOUDBUILD_TAG),_TARGET=buildx-publish-runtime-sleep-workaround \
+ 		--substitutions=_REPO=$(REPO),_CLOUDBUILD_IMAGE=$(CLOUDBUILD_TAG),_TARGET=buildx-publish-runtime-sleep-workaround,_MINUTES=$(MINUTES) \
 		.

@@ -28,13 +28,15 @@ steps:
       - "-c"
       - |
         set -o errexit
-        REPO=${_REPO} make ${_TARGET}
+        REPO=${_REPO} MINUTES=${_MINUTES} make ${_TARGET}
 substitutions:
   _REPO: doug-test
   # Where to find cloud builder image (set via Makefile)
   _CLOUDBUILD_IMAGE: us-central1-docker.pkg.dev/GCP_PROJECT/REPO/build/cloud-build:alpine3.15
   # make target
   _TARGET: no-target-provided
+  # minutes to sleep
+  _MINUTES:
 options:
   machineType: "E2_HIGHCPU_8"
 tags: ["build-timeout"]
