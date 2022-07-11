@@ -27,6 +27,18 @@ Step #2 - "long-build": error: failed to solve: failed to fetch oauth token: une
 Step #2 - "long-build": make: *** [Makefile:229: buildx-publish-runtime-sleep] Error 1
 ```
 
+## Related
+
+This [ZcashFoundation](https://github.com/ZcashFoundation/zebra/pull/4370/files) PR seems to fix the same
+issue in Github CI.  I wonder if there is a way to set this in GCP Cloud Build?
+
+```text
+          # Some builds might take over an hour, and Google's default lifetime duration for
+          # an access token is 1 hour (3600s). We increase this to 3 hours (10800s)
+          # as some builds take over an hour.
+          access_token_lifetime: 10800s
+```
+
 ## Version
 
 The version of all things Docker is printed in the `setup` step:
