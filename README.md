@@ -30,7 +30,8 @@ Step #2 - "long-build": make: *** [Makefile:229: buildx-publish-runtime-sleep] E
 ## Related
 
 This [ZcashFoundation](https://github.com/ZcashFoundation/zebra/pull/4370/files) PR seems to fix the same
-issue in Github CI.  I wonder if there is a way to set this in GCP Cloud Build?
+issue in Github CI ([docs on access_token_lifetime](https://github.com/google-github-actions/auth#generating-oauth-20-access-tokens)).
+I wonder if there is a way to set this in GCP Cloud Build?
 
 ```text
           # Some builds might take over an hour, and Google's default lifetime duration for
@@ -38,6 +39,9 @@ issue in Github CI.  I wonder if there is a way to set this in GCP Cloud Build?
           # as some builds take over an hour.
           access_token_lifetime: 10800s
 ```
+
+The above docs point to [constraints/iam.allowServiceAccountCredentialLifetimeExtension](https://cloud.google.com/resource-manager/docs/organization-policy/org-policy-constraints)
+organization policy as an alternative to this parameter.
 
 ## Version
 
